@@ -10,10 +10,16 @@ local function err(e, n)
 	error(('^1%s^0'):format(e), n)
 end
 
-return function(framework)
-	if framework == 'ox' then framework = 'ox_core'
-	elseif framework == 'esx' then framework = 'es_extended'
-	elseif framework == 'qbcore' then framework = 'qb-core' end
+return function()
+	local framework = GetResourceState('ox_core'):find('start') and 'ox_core'
+
+	if not framework then
+		framework = GetResourceState('es_extended'):find('start') and 'es_extended'
+	end
+
+	if not framework then
+		framework = GetResourceState('qb-core'):find('start') and 'qb-core'
+	end
 
 	local result
 	local success, import = pcall(ref, framework)
@@ -22,6 +28,7 @@ return function(framework)
 		err(import and import or ('no loader exists for %s'):format(framework), 1)
 	end
 
+	-- Return early since framework does not use an imports file
 	if type(import) == 'table' then
 		import.resource = framework
 		return import
@@ -37,20 +44,15 @@ return function(framework)
 		err(result and result or ("unable to load '@%s/%s'"):format(framework, import), 0)
 	end
 
-	if success then
-		success, result = pcall(load, result, ('@@%s/%s'):format(framework, import), 't')
+	success, result = load(result, ('@@%s/%s'):format(framework, import))
 
-		if not result then
-			-- TODO: catch the error that pcall somehow doesn't catch?
-			err(("an unknown error occured while loading '@%s/%s'"):format(framework, import))
-		end
-
-		if success then
-			success, result = pcall(result)
-
-			if not success then err(result) end
-		end
+	if not success then
+		err(result, 0)
 	end
+
+	success, result = pcall(success)
+
+	if not success then err(result) end
 
 	if framework == 'ox_core' then
 		import = Ox
