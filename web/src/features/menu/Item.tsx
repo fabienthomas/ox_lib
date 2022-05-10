@@ -10,7 +10,7 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Option, ContextMenuProps } from "../../interfaces";
+import { Option, ContextMenuProps } from "../../interfaces/context";
 import { fetchNui } from "../../utils/fetchNui";
 
 interface DataProps {
@@ -68,7 +68,7 @@ const Item: React.FC<{
               <Box>
                 <Box paddingBottom={option[1].description ? 1 : 0}>
                   <Text w="100%" fontWeight="medium">
-                    {option[0]}
+                    {option[1].title ? option[1].title : option[0]}
                   </Text>
                 </Box>
                 {option[1].description && (
@@ -104,9 +104,14 @@ const Item: React.FC<{
                   <PopoverBody>
                     {Array.isArray(option[1].metadata) ? (
                       option[1].metadata.map(
-                        (metadata: string, index: number) => (
+                        (
+                          metadata: string | { label: string; value: any },
+                          index: number
+                        ) => (
                           <Text key={`context-metadata-${index}`}>
-                            {metadata}
+                            {typeof metadata === "string"
+                              ? `${metadata}`
+                              : `${metadata.label}: ${metadata.value}`}
                           </Text>
                         )
                       )

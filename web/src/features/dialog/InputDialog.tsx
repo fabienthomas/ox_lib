@@ -5,41 +5,69 @@ import {
   ModalFooter,
   ModalHeader,
   ModalBody,
-  Box,
-  Input,
-  Text,
   Button,
 } from "@chakra-ui/react";
 import React from "react";
 import { useNuiEvent } from "../../hooks/useNuiEvent";
-// import { debugData } from "../utils/debugData";
+import { useLocales } from "../../providers/LocaleProvider";
+import { debugData } from "../../utils/debugData";
 import { fetchNui } from "../../utils/fetchNui";
+import { Row } from "../../interfaces/dialog";
+
+import Input from "./components/input";
+import CheckboxField from "./components/checkbox";
+import SelectField from "./components/select";
 
 interface Props {
   heading: string;
-  inputs: string[];
+  rows: Row[];
 }
 
-// debugData([
-//   {
-//     action: "openDialog",
-//     data: {
-//       heading: "Police locker",
-//       inputs: ["Locker number", "Locker PIN"],
-//     },
-//   },
-// ]);
+debugData<Props>([
+  {
+    action: "openDialog",
+    data: {
+      heading: "Police locker",
+      rows: [
+        { type: "input", label: "Locker number" },
+        { type: "checkbox", label: "Some checkbox" },
+        { type: "input", label: "Locker PIN", password: true, icon: "lock" },
+        { type: "checkbox", label: "Some other checkbox" },
+        {
+          type: "select",
+          label: "Locker type",
+          options: [
+            { value: "option1", label: "Option 1" },
+            { value: "option2", label: "Option 2" },
+            { value: "option3", label: "Option 3" },
+          ],
+        },
+      ],
+    },
+  },
+]);
 
 const InputDialog: React.FC = () => {
-  const [inputOptions, setInputOptions] = React.useState<Props>({
+  const [fields, setFields] = React.useState<Props>({
     heading: "",
-    inputs: [""],
+    rows: [{ type: "input", label: "" }],
   });
-  const [inputData, setInputData] = React.useState<string[]>([]);
+  const [inputData, setInputData] = React.useState<Array<string | boolean>>([]);
+  const [passwordStates, setPasswordStates] = React.useState<boolean[]>([]);
   const [visible, setVisible] = React.useState(false);
 
+  const { locale } = useLocales();
+
+  const handlePasswordStates = (index: number) => {
+    setPasswordStates({
+      ...passwordStates,
+      [index]: !passwordStates[index],
+    });
+  };
+
   useNuiEvent<Props>("openDialog", (data) => {
-    setInputOptions(data);
+    setPasswordStates([]);
+    setFields(data);
     setInputData([]);
     setVisible(true);
   });
@@ -49,18 +77,16 @@ const InputDialog: React.FC = () => {
     fetchNui("inputData");
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) => {
+  const handleChange = (value: string | boolean, index: number) => {
     setInputData((previousData) => {
-      previousData[index] = e.target.value;
+      previousData[index] = value;
       return previousData;
     });
   };
 
   const handleConfirm = () => {
     setVisible(false);
+    console.log(inputData);
     fetchNui("inputData", inputData);
   };
 
@@ -76,21 +102,43 @@ const InputDialog: React.FC = () => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader textAlign="center">{inputOptions.heading}</ModalHeader>
-          <ModalBody fontFamily="Poppins">
-            {inputOptions.inputs.map((input: string, index: number) => (
-              <Box mb={3} key={`input-${index}`}>
-                <Text>{input}</Text>
-                <Input onChange={(e) => handleChange(e, index)} />
-              </Box>
+          <ModalHeader textAlign="center">{fields.heading}</ModalHeader>
+          <ModalBody fontFamily="Poppins" textAlign="left">
+            {fields.rows.map((row, index) => (
+              <React.Fragment key={`row-${index}`}>
+                {row.type === "input" && (
+                  <Input
+                    key={`input-${index}`}
+                    row={row}
+                    index={index}
+                    handleChange={handleChange}
+                    passwordStates={passwordStates}
+                    handlePasswordStates={handlePasswordStates}
+                  />
+                )}
+                {row.type === "checkbox" && (
+                  <CheckboxField
+                    row={row}
+                    index={index}
+                    handleChange={handleChange}
+                  />
+                )}
+                {row.type === "select" && (
+                  <SelectField
+                    row={row}
+                    index={index}
+                    handleChange={handleChange}
+                  />
+                )}
+              </React.Fragment>
             ))}
           </ModalBody>
           <ModalFooter>
             <Button mr={3} onClick={handleClose}>
-              Close
+              {locale.ui.close}
             </Button>
             <Button colorScheme="blue" onClick={handleConfirm}>
-              Confirm
+              {locale.ui.confirm}
             </Button>
           </ModalFooter>
         </ModalContent>

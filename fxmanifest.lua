@@ -23,7 +23,7 @@ game         'gta5'
 --[[ Resource Information ]]--
 name         'ox_lib'
 author       'Linden'
-version      '2.2.1'
+version      '2.3.0'
 repository   'https://github.com/overextended/ox_lib'
 description  'A library of shared functions to utilise in other resources.'
 
@@ -40,7 +40,8 @@ files {
     'imports/**/client.lua',
     'imports/**/shared.lua',
     'web/build/index.html',
-    'web/build/**/*'
+    'web/build/**/*',
+	'locales/*.json',
 }
 
 shared_script 'resource/main.lua'
